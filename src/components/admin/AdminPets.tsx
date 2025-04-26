@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Plus, X, User, Syringe, Vaccine } from "lucide-react";
+import { Plus, X, User, Syringe, PlusCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -133,7 +133,7 @@ export const AdminPets = () => {
           onClick={() => setActiveTab('vaccines')}
           className="flex items-center gap-2"
         >
-          <Vaccine className="h-4 w-4" />
+          <Syringe className="h-4 w-4" />
           Gerenciar Vacinas
         </Button>
       </div>
@@ -362,7 +362,7 @@ export const AdminPets = () => {
                         <div key={vaccine.id} className="p-3 bg-accent/10 rounded-md">
                           <div className="flex items-center justify-between">
                             <span className="font-medium">{vaccine.name}</span>
-                            <Vaccine className="h-4 w-4 text-primary" />
+                            <Syringe className="h-4 w-4 text-primary" />
                           </div>
                           <div className="grid grid-cols-2 gap-2 mt-2">
                             <div>
