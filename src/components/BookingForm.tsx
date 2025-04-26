@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,13 +92,8 @@ export const BookingForm = () => {
         address: customer.address || "",
       });
 
-      // Load customer's pets
-      const savedPets = localStorage.getItem('customerPets');
-      if (savedPets) {
-        const allPets = JSON.parse(savedPets);
-        const customerPets = allPets.filter((pet: Pet) => pet.ownerWhatsapp === customer.whatsapp);
-        setCustomerPets(customerPets);
-      }
+      // Load customer's pets - FIX: Properly load all pets for the current customer
+      loadCustomerPets(customer.whatsapp);
     }
 
     // Load services
@@ -124,22 +120,28 @@ export const BookingForm = () => {
         });
       }
     }
+  }, []);
 
-    // Load saved pet data if available
+  // Function to load all pets for a specific customer
+  const loadCustomerPets = (customerWhatsapp: string) => {
     const savedPets = localStorage.getItem('customerPets');
     if (savedPets) {
-      const pets = JSON.parse(savedPets);
-      if (pets.length > 0) {
-        setPet({
-          name: pets[0].name || "",
-          type: pets[0].type || "",
-          breed: pets[0].breed || "",
-          age: pets[0].age || "",
-          weight: pets[0].weight || "",
-        });
+      const allPets = JSON.parse(savedPets);
+      // Filter pets that belong to this customer by matching the ownerWhatsapp
+      const filteredPets = allPets.filter((pet: Pet & {ownerWhatsapp?: string}) => 
+        pet.ownerWhatsapp === customerWhatsapp
+      );
+      
+      console.log(`Found ${filteredPets.length} pets for customer ${customerWhatsapp}`);
+      setCustomerPets(filteredPets);
+      
+      // If pets are found, select the first one by default
+      if (filteredPets.length > 0) {
+        setPet(filteredPets[0]);
+        setSelectedPetId(filteredPets[0].name);
       }
     }
-  }, []);
+  };
 
   // Handle pet selection
   const handlePetSelection = (petName: string) => {
@@ -332,47 +334,65 @@ export const BookingForm = () => {
           <h3 className="text-lg font-semibold">Dados do Pet</h3>
           {isLoggedIn && customerPets.length > 0 ? (
             <div className="space-y-4">
-              <Select value={selectedPetId} onValueChange={handlePetSelection}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um pet" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customerPets.map((pet) => (
-                    <SelectItem key={pet.name} value={pet.name}>
-                      {pet.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Selecionar Pet</label>
+                <Select value={selectedPetId} onValueChange={handlePetSelection}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um pet" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customerPets.map((pet) => (
+                      <SelectItem key={pet.name} value={pet.name}>
+                        {pet.name} ({pet.type})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           ) : null}
           <div className="grid gap-4">
-            <Input
-              placeholder="Nome do pet"
-              value={pet.name}
-              onChange={(e) => setPet({ ...pet, name: e.target.value })}
-            />
-            <Input
-              placeholder="Tipo (ex: Cachorro, Gato)"
-              value={pet.type}
-              onChange={(e) => setPet({ ...pet, type: e.target.value })}
-            />
-            <Input
-              placeholder="Raça"
-              value={pet.breed}
-              onChange={(e) => setPet({ ...pet, breed: e.target.value })}
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Nome do Pet</label>
+              <Input
+                placeholder="Nome do pet"
+                value={pet.name}
+                onChange={(e) => setPet({ ...pet, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tipo</label>
+              <Input
+                placeholder="Tipo (ex: Cachorro, Gato)"
+                value={pet.type}
+                onChange={(e) => setPet({ ...pet, type: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Raça</label>
+              <Input
+                placeholder="Raça"
+                value={pet.breed}
+                onChange={(e) => setPet({ ...pet, breed: e.target.value })}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
-              <Input
-                placeholder="Idade"
-                value={pet.age}
-                onChange={(e) => setPet({ ...pet, age: e.target.value })}
-              />
-              <Input
-                placeholder="Peso (kg)"
-                value={pet.weight}
-                onChange={(e) => setPet({ ...pet, weight: e.target.value })}
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Idade</label>
+                <Input
+                  placeholder="Idade"
+                  value={pet.age}
+                  onChange={(e) => setPet({ ...pet, age: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Peso (kg)</label>
+                <Input
+                  placeholder="Peso (kg)"
+                  value={pet.weight}
+                  onChange={(e) => setPet({ ...pet, weight: e.target.value })}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -381,21 +401,30 @@ export const BookingForm = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Dados do Tutor</h3>
             <div className="grid gap-4">
-              <Input
-                placeholder="Nome completo"
-                value={owner.name}
-                onChange={(e) => setOwner({ ...owner, name: e.target.value })}
-              />
-              <Input
-                placeholder="WhatsApp"
-                value={owner.whatsapp}
-                onChange={(e) => setOwner({ ...owner, whatsapp: e.target.value })}
-              />
-              <Input
-                placeholder="Endereço"
-                value={owner.address}
-                onChange={(e) => setOwner({ ...owner, address: e.target.value })}
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nome completo</label>
+                <Input
+                  placeholder="Nome completo"
+                  value={owner.name}
+                  onChange={(e) => setOwner({ ...owner, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">WhatsApp</label>
+                <Input
+                  placeholder="WhatsApp"
+                  value={owner.whatsapp}
+                  onChange={(e) => setOwner({ ...owner, whatsapp: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Endereço</label>
+                <Input
+                  placeholder="Endereço"
+                  value={owner.address}
+                  onChange={(e) => setOwner({ ...owner, address: e.target.value })}
+                />
+              </div>
             </div>
           </div>
         )}
