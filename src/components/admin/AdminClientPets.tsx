@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Plus, X, User, Syringe, Dog } from "lucide-react";
+import { Plus, X, User, Syringe, Pencil } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +39,7 @@ export const AdminClientPets = () => {
   const [pets, setPets] = useState<Pet[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [newPet, setNewPet] = useState<Partial<Pet>>({});
+  const [editingPet, setEditingPet] = useState<Pet | null>(null);
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
   const [newVaccine, setNewVaccine] = useState<Partial<Vaccine>>({});
   const [selectedPetId, setSelectedPetId] = useState<string>("");
@@ -47,12 +47,12 @@ export const AdminClientPets = () => {
 
   useEffect(() => {
     const savedPets = localStorage.getItem('clientPets');
-    const savedCustomers = localStorage.getItem('customers');
     const savedVaccines = localStorage.getItem('petVaccines');
+    const savedCustomers = localStorage.getItem('customers');
 
     if (savedPets) setPets(JSON.parse(savedPets));
-    if (savedCustomers) setCustomers(JSON.parse(savedCustomers));
     if (savedVaccines) setVaccines(JSON.parse(savedVaccines));
+    if (savedCustomers) setCustomers(JSON.parse(savedCustomers));
   }, []);
 
   const handleSave = () => {
@@ -86,6 +86,35 @@ export const AdminClientPets = () => {
     setNewPet({});
     setSelectedCustomer("");
     toast.success("Pet cadastrado com sucesso!");
+  };
+
+  const handleUpdatePet = (updatedPet: Pet) => {
+    const updatedPets = pets.map(pet => 
+      pet.id === updatedPet.id ? updatedPet : pet
+    );
+    setPets(updatedPets);
+    localStorage.setItem('clientPets', JSON.stringify(updatedPets));
+
+    // Update appointments to reflect pet changes
+    const appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
+    const updatedAppointments = appointments.map((apt: any) => {
+      if (apt.ownerWhatsapp === updatedPet.ownerWhatsapp && 
+          apt.petName === editingPet?.name) {
+        return {
+          ...apt,
+          petName: updatedPet.name,
+          petType: updatedPet.type,
+          petBreed: updatedPet.breed,
+          petAge: updatedPet.age,
+          petWeight: updatedPet.weight,
+        };
+      }
+      return apt;
+    });
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+    
+    setEditingPet(null);
+    toast.success("Pet atualizado com sucesso!");
   };
 
   const handleAddVaccine = () => {
@@ -183,84 +212,129 @@ export const AdminClientPets = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {pets.map((pet) => (
           <Card key={pet.id} className="p-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-semibold">{pet.name}</h4>
-                <p className="text-sm text-gray-600">{pet.type} • {pet.age}</p>
-                {pet.breed && <p className="text-sm text-gray-600">Raça: {pet.breed}</p>}
-                {pet.weight && <p className="text-sm text-gray-600">Peso: {pet.weight}kg</p>}
-                <p className="text-sm text-gray-600 flex items-center gap-1 mt-2">
-                  <User className="h-4 w-4" />
-                  {pet.ownerName}
-                </p>
+            {editingPet?.id === pet.id ? (
+              <div className="space-y-4">
+                <Input
+                  placeholder="Nome do pet"
+                  value={editingPet.name}
+                  onChange={(e) => setEditingPet({ ...editingPet, name: e.target.value })}
+                />
+                <Input
+                  placeholder="Tipo (ex: Cachorro, Gato)"
+                  value={editingPet.type}
+                  onChange={(e) => setEditingPet({ ...editingPet, type: e.target.value })}
+                />
+                <Input
+                  placeholder="Raça"
+                  value={editingPet.breed}
+                  onChange={(e) => setEditingPet({ ...editingPet, breed: e.target.value })}
+                />
+                <Input
+                  placeholder="Idade"
+                  value={editingPet.age}
+                  onChange={(e) => setEditingPet({ ...editingPet, age: e.target.value })}
+                />
+                <Input
+                  placeholder="Peso (kg)"
+                  value={editingPet.weight}
+                  onChange={(e) => setEditingPet({ ...editingPet, weight: e.target.value })}
+                />
+                <div className="flex gap-2">
+                  <Button onClick={() => handleUpdatePet(editingPet)}>
+                    Salvar
+                  </Button>
+                  <Button variant="outline" onClick={() => setEditingPet(null)}>
+                    Cancelar
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => setSelectedPetId(pet.id)}
-                    >
-                      <Syringe className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Registrar Vacina - {pet.name}</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <Input
-                        placeholder="Nome da vacina"
-                        value={newVaccine.name || ''}
-                        onChange={(e) => setNewVaccine({ ...newVaccine, name: e.target.value })}
-                      />
-                      <Input
-                        type="date"
-                        placeholder="Data da aplicação"
-                        value={newVaccine.date || ''}
-                        onChange={(e) => setNewVaccine({ ...newVaccine, date: e.target.value })}
-                      />
-                      <Input
-                        type="date"
-                        placeholder="Data da próxima dose"
-                        value={newVaccine.nextDate || ''}
-                        onChange={(e) => setNewVaccine({ ...newVaccine, nextDate: e.target.value })}
-                      />
-                      <Textarea
-                        placeholder="Observações"
-                        value={newVaccine.notes || ''}
-                        onChange={(e) => setNewVaccine({ ...newVaccine, notes: e.target.value })}
-                      />
-                      <Button onClick={handleAddVaccine}>
-                        Registrar Vacina
+            ) : (
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-semibold">{pet.name}</h4>
+                  <p className="text-sm text-gray-600">{pet.type} • {pet.age}</p>
+                  {pet.breed && <p className="text-sm text-gray-600">Raça: {pet.breed}</p>}
+                  {pet.weight && <p className="text-sm text-gray-600">Peso: {pet.weight}kg</p>}
+                  <p className="text-sm text-gray-600 flex items-center gap-1 mt-2">
+                    <User className="h-4 w-4" />
+                    {pet.ownerName}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => setEditingPet(pet)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => setSelectedPetId(pet.id)}
+                      >
+                        <Syringe className="h-4 w-4" />
                       </Button>
-                    </div>
-                    <div className="max-h-48 overflow-y-auto">
-                      {vaccines
-                        .filter(v => v.petId === pet.id)
-                        .map(vaccine => (
-                          <div key={vaccine.id} className="mb-2 p-2 bg-accent/10 rounded-md">
-                            <p className="font-medium">{vaccine.name}</p>
-                            <p className="text-sm text-gray-600">
-                              Aplicada: {new Date(vaccine.date).toLocaleDateString()}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              Próxima: {new Date(vaccine.nextDate).toLocaleDateString()}
-                            </p>
-                            {vaccine.notes && (
-                              <p className="text-sm text-gray-600 mt-1">{vaccine.notes}</p>
-                            )}
-                          </div>
-                        ))}
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(pet.id)}>
-                  <X className="h-4 w-4" />
-                </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Registrar Vacina - {pet.name}</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <Input
+                          placeholder="Nome da vacina"
+                          value={newVaccine.name || ''}
+                          onChange={(e) => setNewVaccine({ ...newVaccine, name: e.target.value })}
+                        />
+                        <Input
+                          type="date"
+                          placeholder="Data da aplicação"
+                          value={newVaccine.date || ''}
+                          onChange={(e) => setNewVaccine({ ...newVaccine, date: e.target.value })}
+                        />
+                        <Input
+                          type="date"
+                          placeholder="Data da próxima dose"
+                          value={newVaccine.nextDate || ''}
+                          onChange={(e) => setNewVaccine({ ...newVaccine, nextDate: e.target.value })}
+                        />
+                        <Textarea
+                          placeholder="Observações"
+                          value={newVaccine.notes || ''}
+                          onChange={(e) => setNewVaccine({ ...newVaccine, notes: e.target.value })}
+                        />
+                        <Button onClick={handleAddVaccine}>
+                          Registrar Vacina
+                        </Button>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {vaccines
+                          .filter(v => v.petId === pet.id)
+                          .map(vaccine => (
+                            <div key={vaccine.id} className="mb-2 p-2 bg-accent/10 rounded-md">
+                              <p className="font-medium">{vaccine.name}</p>
+                              <p className="text-sm text-gray-600">
+                                Aplicada: {new Date(vaccine.date).toLocaleDateString()}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                Próxima: {new Date(vaccine.nextDate).toLocaleDateString()}
+                              </p>
+                              {vaccine.notes && (
+                                <p className="text-sm text-gray-600 mt-1">{vaccine.notes}</p>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(pet.id)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </Card>
         ))}
       </div>
