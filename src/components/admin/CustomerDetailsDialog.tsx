@@ -9,7 +9,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FileText } from "lucide-react";
-import { Pet } from './AdminCustomers';
+
+// Define Pet interface here to avoid import issues
+export interface Pet {
+  name: string;
+  type: string;
+  breed: string;
+  age: string;
+  weight: string;
+}
 
 interface CustomerDetailsProps {
   customer: {
@@ -40,7 +48,7 @@ export const CustomerDetailsDialog = ({ customer }: CustomerDetailsProps) => {
             <p className="text-sm text-gray-600">Endereço: {customer.address}</p>
           </div>
 
-          {customer.pets.length > 0 && (
+          {customer.pets && customer.pets.length > 0 && (
             <div>
               <h3 className="text-lg font-semibold mb-4">Pets do Cliente</h3>
               <div className="grid gap-4">

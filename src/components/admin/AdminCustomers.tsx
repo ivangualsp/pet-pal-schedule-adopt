@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
+import { CustomerDetailsDialog, Pet } from "./CustomerDetailsDialog";
 import { EditCustomerDialog } from "./EditCustomerDialog";
 
 interface Customer {
@@ -16,14 +16,6 @@ interface Customer {
   whatsapp: string;
   address: string;
   pets: Pet[];
-}
-
-interface Pet {
-  name: string;
-  type: string;
-  breed: string;
-  age: string;
-  weight: string;
 }
 
 const customerFormSchema = z.object({
@@ -62,20 +54,6 @@ export const AdminCustomers = () => {
       return [];
     };
 
-    // Get customer pets from local storage
-    const loadCustomerPets = () => {
-      const savedPets = localStorage.getItem('customerPets');
-      if (savedPets) {
-        try {
-          return JSON.parse(savedPets);
-        } catch (error) {
-          console.error("Error parsing customer pets data:", error);
-          return [];
-        }
-      }
-      return [];
-    };
-
     // Get all appointments to associate pets with owners
     const loadAppointments = () => {
       const savedAppointments = localStorage.getItem('appointments');
@@ -91,8 +69,10 @@ export const AdminCustomers = () => {
     };
 
     const rawCustomers = loadCustomers();
-    const customerPets = loadCustomerPets();
     const appointments = loadAppointments();
+
+    console.log("Raw customers:", rawCustomers);
+    console.log("Appointments:", appointments);
 
     // Build the full customer data with their pets
     const fullCustomers = rawCustomers.map((customer: any) => {
@@ -100,6 +80,8 @@ export const AdminCustomers = () => {
       const customerAppointments = appointments.filter((apt: any) => 
         apt.owner?.name === customer.name && apt.owner?.whatsapp === customer.whatsapp
       );
+      
+      console.log(`Appointments for ${customer.name}:`, customerAppointments);
       
       // Get all unique pets for this customer from appointments
       const pets = customerAppointments.reduce((acc: Pet[], apt: any) => {
@@ -115,6 +97,8 @@ export const AdminCustomers = () => {
         return acc;
       }, []);
 
+      console.log(`Pets for ${customer.name}:`, pets);
+
       return {
         name: customer.name,
         whatsapp: customer.whatsapp,
@@ -123,6 +107,7 @@ export const AdminCustomers = () => {
       };
     });
 
+    console.log("Full customers with pets:", fullCustomers);
     setCustomers(fullCustomers);
   }, []);
 
