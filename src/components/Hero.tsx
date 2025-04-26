@@ -1,6 +1,6 @@
-
 import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
+import { Calendar, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Hero = () => {
   return (
@@ -14,10 +14,18 @@ export const Hero = () => {
             Agendamento de serviços e adoção responsável em um só lugar.
             Confie seu pet aos melhores profissionais.
           </p>
-          <Button className="bg-accent hover:bg-accent/90" size="lg">
-            <Calendar className="mr-2 h-5 w-5" />
-            Agendar Serviço
-          </Button>
+          <div className="flex justify-center gap-4">
+            <Button className="bg-accent hover:bg-accent/90" size="lg">
+              <Calendar className="mr-2 h-5 w-5" />
+              Agendar Serviço
+            </Button>
+            <Button variant="outline" size="lg" asChild>
+              <Link to="/admin">
+                <Settings className="mr-2 h-5 w-5" />
+                Área Admin
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
