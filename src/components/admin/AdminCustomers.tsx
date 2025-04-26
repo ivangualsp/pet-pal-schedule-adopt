@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
+import { EditCustomerDialog } from "./EditCustomerDialog";
 
 interface Customer {
   name: string;
@@ -123,6 +125,20 @@ export const AdminCustomers = () => {
 
     setCustomers(fullCustomers);
   }, []);
+
+  const handleEditCustomer = (whatsapp: string, updatedData: any) => {
+    const updatedCustomers = customers.map(customer => {
+      if (customer.whatsapp === whatsapp) {
+        return {
+          ...customer,
+          ...updatedData
+        };
+      }
+      return customer;
+    });
+    setCustomers(updatedCustomers);
+    localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+  };
 
   const onSubmit = (data: z.infer<typeof customerFormSchema>) => {
     const newCustomer = {
@@ -247,29 +263,22 @@ export const AdminCustomers = () => {
                       <h3 className="font-medium">{customer.name}</h3>
                       <p className="text-sm text-gray-600">{customer.whatsapp}</p>
                       {customer.address && <p className="text-sm text-gray-600">{customer.address}</p>}
-                      
-                      {customer.pets.length > 0 && (
-                        <div className="mt-3">
-                          <h4 className="text-sm font-medium">Pets:</h4>
-                          <ul className="mt-1 space-y-1">
-                            {customer.pets.map((pet, petIndex) => (
-                              <li key={petIndex} className="text-sm">
-                                {pet.name} • {pet.type} {pet.breed && `• ${pet.breed}`} 
-                                {pet.age && `• ${pet.age}`} {pet.weight && `• ${pet.weight}kg`}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleDeleteCustomer(customer.whatsapp)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <EditCustomerDialog
+                      customer={customer}
+                      onSave={(data) => handleEditCustomer(customer.whatsapp, data)}
+                    />
+                    <CustomerDetailsDialog customer={customer} />
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleDeleteCustomer(customer.whatsapp)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
