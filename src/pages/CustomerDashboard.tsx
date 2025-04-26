@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [pets, setPets] = useState<any[]>([]);
   const [vaccines, setVaccines] = useState<any[]>([]);
-  const [selectedPetId, setSelectedPetId] = useState<string>("");
+  const [selectedPetId, setSelectedPetId] = useState<string>("all"); // Changed from empty string to "all"
 
   useEffect(() => {
     const loadCustomerData = () => {
@@ -91,11 +92,11 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
   };
 
   const filteredAppointments = appointments.filter(
-    apt => selectedPetId ? apt.petId === selectedPetId : true
+    apt => selectedPetId === "all" ? true : apt.petId === selectedPetId
   );
 
   const filteredVaccines = vaccines.filter(
-    vaccine => selectedPetId ? (vaccine.petId === selectedPetId || vaccine.petName === pets.find(p => p.id === selectedPetId)?.name) : true
+    vaccine => selectedPetId === "all" ? true : (vaccine.petId === selectedPetId || vaccine.petName === pets.find(p => p.id === selectedPetId)?.name)
   );
 
   return (
@@ -134,9 +135,9 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
                   <SelectValue placeholder="Todos os pets" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os pets</SelectItem>
+                  <SelectItem value="all">Todos os pets</SelectItem> {/* Changed from empty string to "all" */}
                   {pets.map((pet) => (
-                    <SelectItem key={pet.id} value={pet.id}>
+                    <SelectItem key={pet.id} value={pet.id || `pet-${pet.name}`}>
                       {pet.name}
                     </SelectItem>
                   ))}
@@ -271,7 +272,7 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
                 <CardTitle>Histórico</CardTitle>
               </CardHeader>
               <CardContent>
-                {selectedPetId ? (
+                {selectedPetId !== "all" ? (
                   <div className="space-y-6">
                     {pets
                       .filter((pet) => pet.id === selectedPetId)
