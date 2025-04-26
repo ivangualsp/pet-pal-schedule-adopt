@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Service } from "./admin/AdminServices";
+import { TimeSlot } from "./admin/AdminAppointments";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -29,9 +30,16 @@ interface Owner {
 interface Appointment {
   id: string;
   date: string;
+  time: string;
   serviceId: string;
-  pet: Pet;
-  owner: Owner;
+  petName: string;
+  petType: string;
+  petBreed: string;
+  petAge: string;
+  petWeight: string;
+  ownerName: string;
+  ownerWhatsapp: string;
+  ownerAddress: string;
   status: 'pending' | 'confirmed' | 'cancelled';
 }
 
@@ -39,6 +47,8 @@ export const BookingForm = () => {
   const navigate = useNavigate();
   const [services, setServices] = useState<Service[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedTime, setSelectedTime] = useState<string>("");
+  const [availableTimes, setAvailableTimes] = useState<TimeSlot[]>([]);
   const [selectedService, setSelectedService] = useState<string>("");
   const [pet, setPet] = useState<Pet>({
     name: "",
@@ -54,16 +64,51 @@ export const BookingForm = () => {
   });
 
   useEffect(() => {
+    // Load services
     const savedServices = localStorage.getItem('services');
     if (savedServices) {
       setServices(JSON.parse(savedServices));
+    }
+
+    // Load time slots
+    const savedTimeSlots = localStorage.getItem('timeSlots');
+    if (savedTimeSlots) {
+      setAvailableTimes(JSON.parse(savedTimeSlots));
+    }
+
+    // Load saved customer data if available
+    const savedCustomers = localStorage.getItem('customers');
+    if (savedCustomers) {
+      const customers = JSON.parse(savedCustomers);
+      if (customers.length > 0) {
+        setOwner({
+          name: customers[0].name || "",
+          whatsapp: customers[0].whatsapp || "",
+          address: customers[0].address || "",
+        });
+      }
+    }
+
+    // Load saved pet data if available
+    const savedPets = localStorage.getItem('customerPets');
+    if (savedPets) {
+      const pets = JSON.parse(savedPets);
+      if (pets.length > 0) {
+        setPet({
+          name: pets[0].name || "",
+          type: pets[0].type || "",
+          breed: pets[0].breed || "",
+          age: pets[0].age || "",
+          weight: pets[0].weight || "",
+        });
+      }
     }
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedDate || !selectedService || !pet.name || !owner.name || !owner.whatsapp) {
+    if (!selectedDate || !selectedService || !selectedTime || !pet.name || !owner.name || !owner.whatsapp) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
@@ -71,18 +116,26 @@ export const BookingForm = () => {
     const appointment: Appointment = {
       id: Date.now().toString(),
       date: selectedDate.toISOString(),
+      time: selectedTime,
       serviceId: selectedService,
-      pet,
-      owner,
+      petName: pet.name,
+      petType: pet.type,
+      petBreed: pet.breed,
+      petAge: pet.age,
+      petWeight: pet.weight,
+      ownerName: owner.name,
+      ownerWhatsapp: owner.whatsapp,
+      ownerAddress: owner.address,
       status: 'pending'
     };
 
+    // Save appointment
     const savedAppointments = localStorage.getItem('appointments');
     const appointments = savedAppointments ? JSON.parse(savedAppointments) : [];
     appointments.push(appointment);
     localStorage.setItem('appointments', JSON.stringify(appointments));
 
-    // Save pet and owner data separately for future use
+    // Save pet data separately
     const savedPets = localStorage.getItem('customerPets') || '[]';
     const pets = JSON.parse(savedPets);
     if (!pets.find((p: Pet) => p.name === pet.name)) {
@@ -90,6 +143,7 @@ export const BookingForm = () => {
       localStorage.setItem('customerPets', JSON.stringify(pets));
     }
 
+    // Save owner data separately
     const savedOwners = localStorage.getItem('customers') || '[]';
     const owners = JSON.parse(savedOwners);
     if (!owners.find((o: Owner) => o.whatsapp === owner.whatsapp)) {
@@ -149,6 +203,27 @@ export const BookingForm = () => {
                 />
               </PopoverContent>
             </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Horário</label>
+            <Select value={selectedTime} onValueChange={setSelectedTime}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um horário" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableTimes.sort((a, b) => 
+                  a.time.localeCompare(b.time)
+                ).map((slot) => (
+                  <SelectItem key={slot.id} value={slot.time}>
+                    <div className="flex items-center">
+                      <Clock className="mr-2 h-4 w-4" />
+                      {slot.time}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

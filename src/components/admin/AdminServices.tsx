@@ -67,13 +67,13 @@ export const AdminServices = () => {
               type="number"
               placeholder="Preço (R$)"
               value={newService.price || ''}
-              onChange={(e) => setNewService({ ...newService, price: e.target.value })}
+              onChange={(e) => setNewService({ ...newService, price: Number(e.target.value) })}
             />
             <Input
               type="number"
               placeholder="Duração (minutos)"
               value={newService.duration || ''}
-              onChange={(e) => setNewService({ ...newService, duration: e.target.value })}
+              onChange={(e) => setNewService({ ...newService, duration: Number(e.target.value) })}
             />
           </div>
           <Button onClick={handleSave}>
