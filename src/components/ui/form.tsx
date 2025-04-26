@@ -42,13 +42,18 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const { getFieldState, formState } = useFormContext()
-
-  const fieldState = getFieldState(fieldContext.name, formState)
+  const formContext = useFormContext()
 
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")
   }
+
+  if (!formContext) {
+    throw new Error("useFormField should be used within a Form component")
+  }
+
+  const { getFieldState, formState } = formContext
+  const fieldState = getFieldState(fieldContext.name, formState)
 
   const { id } = itemContext
 
@@ -88,6 +93,22 @@ const FormLabel = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
 >(({ className, ...props }, ref) => {
+  // Check if we're inside a form field context
+  const fieldContext = React.useContext(FormFieldContext)
+  const formContext = useFormContext()
+  
+  // If we're not inside a form context, render a normal label
+  if (!fieldContext || !formContext) {
+    return (
+      <Label
+        ref={ref}
+        className={className}
+        {...props}
+      />
+    )
+  }
+  
+  // Otherwise, use the form field context
   const { error, formItemId } = useFormField()
 
   return (
@@ -105,6 +126,15 @@ const FormControl = React.forwardRef<
   React.ElementRef<typeof Slot>,
   React.ComponentPropsWithoutRef<typeof Slot>
 >(({ ...props }, ref) => {
+  // Check if we're inside a form field context
+  const fieldContext = React.useContext(FormFieldContext)
+  const formContext = useFormContext()
+  
+  // If we're not inside a form context, just render the children
+  if (!fieldContext || !formContext) {
+    return <Slot ref={ref} {...props} />
+  }
+  
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
 
   return (
@@ -127,6 +157,21 @@ const FormDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => {
+  // Check if we're inside a form field context
+  const fieldContext = React.useContext(FormFieldContext)
+  const formContext = useFormContext()
+  
+  // If we're not inside a form context, render a normal paragraph
+  if (!fieldContext || !formContext) {
+    return (
+      <p
+        ref={ref}
+        className={cn("text-sm text-muted-foreground", className)}
+        {...props}
+      />
+    )
+  }
+  
   const { formDescriptionId } = useFormField()
 
   return (
@@ -144,6 +189,26 @@ const FormMessage = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
+  // Check if we're inside a form field context
+  const fieldContext = React.useContext(FormFieldContext)
+  const formContext = useFormContext()
+  
+  // If we're not inside a form context, and there are children, render them
+  if (!fieldContext || !formContext) {
+    if (children) {
+      return (
+        <p
+          ref={ref}
+          className={cn("text-sm font-medium text-destructive", className)}
+          {...props}
+        >
+          {children}
+        </p>
+      )
+    }
+    return null
+  }
+  
   const { error, formMessageId } = useFormField()
   const body = error ? String(error?.message) : children
 
