@@ -1,9 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { User, Search, X } from "lucide-react";
+import { User, Search, X, Plus } from "lucide-react";
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
 
 interface Customer {
   name: string;
@@ -20,9 +24,26 @@ interface Pet {
   weight: string;
 }
 
+const customerFormSchema = z.object({
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  whatsapp: z.string().min(10, "WhatsApp deve ter pelo menos 10 dígitos"),
+  address: z.string().min(5, "Endereço deve ter pelo menos 5 caracteres"),
+});
+
 export const AdminCustomers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [showForm, setShowForm] = useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof customerFormSchema>>({
+    resolver: zodResolver(customerFormSchema),
+    defaultValues: {
+      name: "",
+      whatsapp: "",
+      address: "",
+    },
+  });
 
   useEffect(() => {
     // Get customers from local storage
@@ -103,6 +124,27 @@ export const AdminCustomers = () => {
     setCustomers(fullCustomers);
   }, []);
 
+  const onSubmit = (data: z.infer<typeof customerFormSchema>) => {
+    const newCustomer = {
+      name: data.name,
+      whatsapp: data.whatsapp,
+      address: data.address,
+      pets: [],
+    };
+
+    const updatedCustomers = [...customers, newCustomer];
+    setCustomers(updatedCustomers);
+    localStorage.setItem('customers', JSON.stringify(updatedCustomers));
+    
+    form.reset();
+    setShowForm(false);
+    
+    toast({
+      title: "Cliente cadastrado com sucesso!",
+      description: `${data.name} foi adicionado à lista de clientes.`
+    });
+  };
+
   const filteredCustomers = customers.filter(customer => 
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.whatsapp.includes(searchTerm)
@@ -117,8 +159,8 @@ export const AdminCustomers = () => {
   return (
     <div className="space-y-6">
       <Card className="p-6">
-        <div className="flex mb-6">
-          <div className="relative flex-1">
+        <div className="flex justify-between items-center mb-6">
+          <div className="relative flex-1 mr-4">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Buscar cliente por nome ou telefone"
@@ -127,7 +169,68 @@ export const AdminCustomers = () => {
               className="pl-10"
             />
           </div>
+          <Button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2"
+          >
+            {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {showForm ? "Cancelar" : "Novo Cliente"}
+          </Button>
         </div>
+
+        {showForm && (
+          <Card className="p-4 mb-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do cliente" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="whatsapp"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>WhatsApp</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Número do WhatsApp" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Endereço</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Endereço do cliente" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end">
+                  <Button type="submit">Cadastrar Cliente</Button>
+                </div>
+              </form>
+            </Form>
+          </Card>
+        )}
 
         {filteredCustomers.length === 0 ? (
           <p className="text-center text-gray-500">Nenhum cliente encontrado</p>
