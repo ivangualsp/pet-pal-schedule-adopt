@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
 
 interface Pet {
   id: string;
@@ -156,52 +158,80 @@ export const AdminClientPets = () => {
         <h3 className="text-lg font-semibold mb-4">Cadastrar Pet do Cliente</h3>
         <div className="grid gap-4">
           <div className="grid grid-cols-2 gap-4">
-            <Input
-              placeholder="Nome do pet"
-              value={newPet.name || ''}
-              onChange={(e) => setNewPet({ ...newPet, name: e.target.value })}
-            />
-            <Input
-              placeholder="Tipo (ex: Cachorro, Gato)"
-              value={newPet.type || ''}
-              onChange={(e) => setNewPet({ ...newPet, type: e.target.value })}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="pet-name">Nome do pet</Label>
+              <Input
+                id="pet-name"
+                placeholder="Nome do pet"
+                value={newPet.name || ''}
+                onChange={(e) => setNewPet({ ...newPet, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pet-type">Tipo de animal</Label>
+              <Input
+                id="pet-type"
+                placeholder="Tipo (ex: Cachorro, Gato)"
+                value={newPet.type || ''}
+                onChange={(e) => setNewPet({ ...newPet, type: e.target.value })}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <Input
-              placeholder="Raça"
-              value={newPet.breed || ''}
-              onChange={(e) => setNewPet({ ...newPet, breed: e.target.value })}
-            />
-            <Input
-              placeholder="Idade"
-              value={newPet.age || ''}
-              onChange={(e) => setNewPet({ ...newPet, age: e.target.value })}
-            />
-            <Input
-              placeholder="Peso (kg)"
-              type="number"
-              value={newPet.weight || ''}
-              onChange={(e) => setNewPet({ ...newPet, weight: e.target.value })}
+            <div className="space-y-2">
+              <Label htmlFor="pet-breed">Raça</Label>
+              <Input
+                id="pet-breed"
+                placeholder="Raça"
+                value={newPet.breed || ''}
+                onChange={(e) => setNewPet({ ...newPet, breed: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pet-age">Idade</Label>
+              <Input
+                id="pet-age"
+                placeholder="Idade"
+                value={newPet.age || ''}
+                onChange={(e) => setNewPet({ ...newPet, age: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pet-weight">Peso (kg)</Label>
+              <Input
+                id="pet-weight"
+                placeholder="Peso (kg)"
+                type="number"
+                value={newPet.weight || ''}
+                onChange={(e) => setNewPet({ ...newPet, weight: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pet-owner">Cliente</Label>
+            <select
+              id="pet-owner"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2"
+              value={selectedCustomer}
+              onChange={(e) => setSelectedCustomer(e.target.value)}
+            >
+              <option value="">Selecione o cliente</option>
+              {customers.map((customer) => (
+                <option key={customer.whatsapp} value={customer.whatsapp}>
+                  {customer.name} ({customer.whatsapp})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pet-notes">Observações</Label>
+            <Textarea
+              id="pet-notes"
+              placeholder="Observações"
+              value={newPet.notes || ''}
+              onChange={(e) => setNewPet({ ...newPet, notes: e.target.value })}
             />
           </div>
-          <select
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2"
-            value={selectedCustomer}
-            onChange={(e) => setSelectedCustomer(e.target.value)}
-          >
-            <option value="">Selecione o cliente</option>
-            {customers.map((customer) => (
-              <option key={customer.whatsapp} value={customer.whatsapp}>
-                {customer.name} ({customer.whatsapp})
-              </option>
-            ))}
-          </select>
-          <Textarea
-            placeholder="Observações"
-            value={newPet.notes || ''}
-            onChange={(e) => setNewPet({ ...newPet, notes: e.target.value })}
-          />
           <Button onClick={handleSave}>
             <Plus className="mr-2 h-4 w-4" />
             Cadastrar Pet
@@ -214,31 +244,51 @@ export const AdminClientPets = () => {
           <Card key={pet.id} className="p-4">
             {editingPet?.id === pet.id ? (
               <div className="space-y-4">
-                <Input
-                  placeholder="Nome do pet"
-                  value={editingPet.name}
-                  onChange={(e) => setEditingPet({ ...editingPet, name: e.target.value })}
-                />
-                <Input
-                  placeholder="Tipo (ex: Cachorro, Gato)"
-                  value={editingPet.type}
-                  onChange={(e) => setEditingPet({ ...editingPet, type: e.target.value })}
-                />
-                <Input
-                  placeholder="Raça"
-                  value={editingPet.breed}
-                  onChange={(e) => setEditingPet({ ...editingPet, breed: e.target.value })}
-                />
-                <Input
-                  placeholder="Idade"
-                  value={editingPet.age}
-                  onChange={(e) => setEditingPet({ ...editingPet, age: e.target.value })}
-                />
-                <Input
-                  placeholder="Peso (kg)"
-                  value={editingPet.weight}
-                  onChange={(e) => setEditingPet({ ...editingPet, weight: e.target.value })}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor={`edit-name-${pet.id}`}>Nome do pet</Label>
+                  <Input
+                    id={`edit-name-${pet.id}`}
+                    placeholder="Nome do pet"
+                    value={editingPet.name}
+                    onChange={(e) => setEditingPet({ ...editingPet, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`edit-type-${pet.id}`}>Tipo de animal</Label>
+                  <Input
+                    id={`edit-type-${pet.id}`}
+                    placeholder="Tipo (ex: Cachorro, Gato)"
+                    value={editingPet.type}
+                    onChange={(e) => setEditingPet({ ...editingPet, type: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`edit-breed-${pet.id}`}>Raça</Label>
+                  <Input
+                    id={`edit-breed-${pet.id}`}
+                    placeholder="Raça"
+                    value={editingPet.breed}
+                    onChange={(e) => setEditingPet({ ...editingPet, breed: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`edit-age-${pet.id}`}>Idade</Label>
+                  <Input
+                    id={`edit-age-${pet.id}`}
+                    placeholder="Idade"
+                    value={editingPet.age}
+                    onChange={(e) => setEditingPet({ ...editingPet, age: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`edit-weight-${pet.id}`}>Peso (kg)</Label>
+                  <Input
+                    id={`edit-weight-${pet.id}`}
+                    placeholder="Peso (kg)"
+                    value={editingPet.weight}
+                    onChange={(e) => setEditingPet({ ...editingPet, weight: e.target.value })}
+                  />
+                </div>
                 <div className="flex gap-2">
                   <Button onClick={() => handleUpdatePet(editingPet)}>
                     Salvar

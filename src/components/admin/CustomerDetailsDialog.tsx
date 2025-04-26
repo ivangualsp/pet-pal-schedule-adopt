@@ -11,6 +11,7 @@ import {
 import { FileText, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { FormField, FormItem, FormLabel } from "@/components/ui/form";
 
 // Define Pet interface here to avoid import issues
 export interface Pet {
@@ -89,36 +90,46 @@ export const CustomerDetailsDialog = ({ customer }: CustomerDetailsProps) => {
                   <div key={index} className="border p-4 rounded-lg">
                     {editingPet === pet ? (
                       <div className="space-y-4">
-                        <Input
-                          value={editingPet.name}
-                          onChange={(e) => setEditingPet({ ...editingPet, name: e.target.value })}
-                          placeholder="Nome do pet"
-                          className="mb-2"
-                        />
-                        <Input
-                          value={editingPet.type}
-                          onChange={(e) => setEditingPet({ ...editingPet, type: e.target.value })}
-                          placeholder="Tipo (ex: Cachorro, Gato)"
-                          className="mb-2"
-                        />
-                        <Input
-                          value={editingPet.breed}
-                          onChange={(e) => setEditingPet({ ...editingPet, breed: e.target.value })}
-                          placeholder="Raça"
-                          className="mb-2"
-                        />
-                        <Input
-                          value={editingPet.age}
-                          onChange={(e) => setEditingPet({ ...editingPet, age: e.target.value })}
-                          placeholder="Idade"
-                          className="mb-2"
-                        />
-                        <Input
-                          value={editingPet.weight}
-                          onChange={(e) => setEditingPet({ ...editingPet, weight: e.target.value })}
-                          placeholder="Peso (kg)"
-                          className="mb-2"
-                        />
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Nome do Pet</label>
+                          <Input
+                            value={editingPet.name}
+                            onChange={(e) => setEditingPet({ ...editingPet, name: e.target.value })}
+                            placeholder="Nome do pet"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Tipo de Animal</label>
+                          <Input
+                            value={editingPet.type}
+                            onChange={(e) => setEditingPet({ ...editingPet, type: e.target.value })}
+                            placeholder="Tipo (ex: Cachorro, Gato)"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Raça</label>
+                          <Input
+                            value={editingPet.breed}
+                            onChange={(e) => setEditingPet({ ...editingPet, breed: e.target.value })}
+                            placeholder="Raça"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Idade</label>
+                          <Input
+                            value={editingPet.age}
+                            onChange={(e) => setEditingPet({ ...editingPet, age: e.target.value })}
+                            placeholder="Idade"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Peso (kg)</label>
+                          <Input
+                            value={editingPet.weight}
+                            onChange={(e) => setEditingPet({ ...editingPet, weight: e.target.value })}
+                            placeholder="Peso (kg)"
+                          />
+                        </div>
                         <div className="flex gap-2">
                           <Button onClick={() => handleSavePet(editingPet, index)}>
                             Salvar
