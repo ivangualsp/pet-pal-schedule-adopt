@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
-import { Calendar, Clock, Syringe } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Syringe, CalendarPlus } from "lucide-react";
 import { toast } from "sonner";
 
 interface CustomerDashboardProps {
@@ -60,6 +59,16 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
 
     loadCustomerData();
   }, [customerWhatsapp]);
+
+  const handleNewAppointment = () => {
+    const selectedPet = pets.find(p => p.id === selectedPetId);
+    if (selectedPet) {
+      localStorage.setItem('appointmentPetData', JSON.stringify(selectedPet));
+      navigate('/booking');
+    } else {
+      toast.error("Por favor, selecione um pet para agendar");
+    }
+  };
 
   const handleCancelAppointment = (appointmentId: string) => {
     const savedAppointments = localStorage.getItem('appointments');
@@ -135,7 +144,7 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
                   <SelectValue placeholder="Todos os pets" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os pets</SelectItem> {/* Changed from empty string to "all" */}
+                  <SelectItem value="all">Todos os pets</SelectItem>
                   {pets.map((pet) => (
                     <SelectItem key={pet.id} value={pet.id || `pet-${pet.name}`}>
                       {pet.name}
@@ -150,7 +159,7 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
         <Tabs defaultValue="appointments" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="appointments" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+              <CalendarIcon className="h-4 w-4" />
               Agendamentos
             </TabsTrigger>
             <TabsTrigger value="vaccines" className="flex items-center gap-2">
@@ -165,8 +174,16 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
 
           <TabsContent value="appointments">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Meus Agendamentos</CardTitle>
+                <Button
+                  onClick={handleNewAppointment}
+                  className="flex items-center gap-2"
+                  disabled={selectedPetId === "all" || !selectedPetId}
+                >
+                  <CalendarPlus className="h-4 w-4" />
+                  Agendar Serviço
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -188,7 +205,7 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-primary" />
+                            <CalendarIcon className="h-4 w-4 text-primary" />
                             <span className="font-medium">
                               {format(new Date(appointment.date), 'dd/MM/yyyy')} às {appointment.time}
                             </span>

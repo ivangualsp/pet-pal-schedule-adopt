@@ -70,6 +70,15 @@ export const BookingForm = () => {
   const [currentCustomer, setCurrentCustomer] = useState<any>(null);
 
   useEffect(() => {
+    // Check if there's pre-filled pet data
+    const appointmentPetData = localStorage.getItem('appointmentPetData');
+    if (appointmentPetData) {
+      const petData = JSON.parse(appointmentPetData);
+      setPet(petData);
+      setSelectedPetId(petData.name);
+      localStorage.removeItem('appointmentPetData'); // Clear the data after using it
+    }
+
     // Check if user is logged in
     const savedCustomer = localStorage.getItem('currentCustomer');
     if (savedCustomer) {
