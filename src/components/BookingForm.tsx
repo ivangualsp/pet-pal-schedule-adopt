@@ -1,17 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Clock } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { Service } from "./admin/AdminServices";
 import { TimeSlot } from "./admin/AdminAppointments";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { ServiceSelection } from "./booking/ServiceSelection";
+import { DateTimeSelection } from "./booking/DateTimeSelection";
+import { PetInformation } from "./booking/PetInformation";
+import { OwnerInformation } from "./booking/OwnerInformation";
+import { format } from "date-fns";
 
 interface Pet {
   name: string;
@@ -143,21 +140,6 @@ export const BookingForm = () => {
     }
   };
 
-  // Handle pet selection
-  const handlePetSelection = (petName: string) => {
-    const selectedPet = customerPets.find(pet => pet.name === petName);
-    if (selectedPet) {
-      setPet({
-        name: selectedPet.name,
-        type: selectedPet.type,
-        breed: selectedPet.breed,
-        age: selectedPet.age,
-        weight: selectedPet.weight,
-      });
-      setSelectedPetId(petName);
-    }
-  };
-
   // Update available time slots when date changes
   useEffect(() => {
     if (selectedDate) {
@@ -253,180 +235,36 @@ export const BookingForm = () => {
         <h2 className="text-2xl font-bold">Agendar Serviço</h2>
         
         <div className="grid gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Serviço</label>
-            <Select value={selectedService} onValueChange={setSelectedService}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um serviço" />
-              </SelectTrigger>
-              <SelectContent>
-                {services.map((service) => (
-                  <SelectItem key={service.id} value={service.id}>
-                    {service.name} - R$ {service.price.toFixed(2)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <ServiceSelection 
+            services={services}
+            selectedService={selectedService}
+            onServiceChange={setSelectedService}
+          />
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Data</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : <span>Selecione uma data</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    setSelectedDate(date);
-                    setSelectedTime(""); // Reset time selection when date changes
-                  }}
-                  initialFocus
-                  disabled={(date) => date < new Date()}
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Horário</label>
-            <Select value={selectedTime} onValueChange={setSelectedTime}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um horário" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableTimes
-                  .sort((a, b) => a.time.localeCompare(b.time))
-                  .map((slot) => {
-                    const isBooked = bookedTimeSlots.includes(slot.time);
-                    return (
-                      <SelectItem 
-                        key={slot.id} 
-                        value={slot.time} 
-                        disabled={isBooked}
-                        className={isBooked ? "text-gray-400" : ""}
-                      >
-                        <div className="flex items-center">
-                          <Clock className="mr-2 h-4 w-4" />
-                          {slot.time} {isBooked && " (Indisponível)"}
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-              </SelectContent>
-            </Select>
-          </div>
+          <DateTimeSelection 
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            availableTimes={availableTimes}
+            bookedTimeSlots={bookedTimeSlots}
+            onDateChange={setSelectedDate}
+            onTimeChange={setSelectedTime}
+          />
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Dados do Pet</h3>
-          {isLoggedIn && customerPets.length > 0 ? (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Selecionar Pet</label>
-                <Select value={selectedPetId} onValueChange={handlePetSelection}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um pet" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customerPets.map((pet) => (
-                      <SelectItem key={pet.name} value={pet.name}>
-                        {pet.name} ({pet.type})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          ) : null}
-          <div className="grid gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nome do Pet</label>
-              <Input
-                placeholder="Nome do pet"
-                value={pet.name}
-                onChange={(e) => setPet({ ...pet, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo</label>
-              <Input
-                placeholder="Tipo (ex: Cachorro, Gato)"
-                value={pet.type}
-                onChange={(e) => setPet({ ...pet, type: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Raça</label>
-              <Input
-                placeholder="Raça"
-                value={pet.breed}
-                onChange={(e) => setPet({ ...pet, breed: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Idade</label>
-                <Input
-                  placeholder="Idade"
-                  value={pet.age}
-                  onChange={(e) => setPet({ ...pet, age: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Peso (kg)</label>
-                <Input
-                  placeholder="Peso (kg)"
-                  value={pet.weight}
-                  onChange={(e) => setPet({ ...pet, weight: e.target.value })}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <PetInformation 
+          pet={pet}
+          onPetChange={setPet}
+          customerPets={customerPets}
+          selectedPetId={selectedPetId}
+          onPetSelection={handlePetSelection}
+          isLoggedIn={isLoggedIn}
+        />
 
         {!isLoggedIn && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Dados do Tutor</h3>
-            <div className="grid gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Nome completo</label>
-                <Input
-                  placeholder="Nome completo"
-                  value={owner.name}
-                  onChange={(e) => setOwner({ ...owner, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">WhatsApp</label>
-                <Input
-                  placeholder="WhatsApp"
-                  value={owner.whatsapp}
-                  onChange={(e) => setOwner({ ...owner, whatsapp: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Endereço</label>
-                <Input
-                  placeholder="Endereço"
-                  value={owner.address}
-                  onChange={(e) => setOwner({ ...owner, address: e.target.value })}
-                />
-              </div>
-            </div>
-          </div>
+          <OwnerInformation 
+            owner={owner}
+            onOwnerChange={setOwner}
+          />
         )}
       </div>
 
