@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Vaccine } from "lucide-react";
+import { Calendar, Check } from "lucide-react";
 import { toast } from "sonner";
 
 interface CustomerDashboardProps {
@@ -33,7 +32,7 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
 
       if (savedPets) {
         const allPets = JSON.parse(savedPets);
-        const customerPets = allPets.filter(
+         const customerPets = allPets.filter(
           (pet: any) => pet.ownerWhatsapp === customerWhatsapp
         );
         setPets(customerPets);
@@ -141,7 +140,7 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
                           .filter((v) => v.petName === pet.name)
                           .map((vaccine) => (
                             <div key={vaccine.id} className="flex items-center gap-2 text-sm">
-                              <Vaccine className="h-4 w-4" />
+                              <Check className="h-4 w-4" />
                               <span>{vaccine.name}</span>
                               <span className="text-muted-foreground">
                                 ({format(new Date(vaccine.date), 'dd/MM/yyyy')})

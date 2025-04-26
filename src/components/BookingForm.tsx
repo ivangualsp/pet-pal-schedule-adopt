@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,7 @@ export const BookingForm = () => {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [availableTimes, setAvailableTimes] = useState<TimeSlot[]>([]);
+  const [bookedTimeSlots, setBookedTimeSlots] = useState<string[]>([]);
   const [selectedService, setSelectedService] = useState<string>("");
   const [pet, setPet] = useState<Pet>({
     name: "",
@@ -62,6 +64,7 @@ export const BookingForm = () => {
     address: "",
   });
 
+  // Load initial data
   useEffect(() => {
     // Load services
     const savedServices = localStorage.getItem('services');
@@ -104,16 +107,30 @@ export const BookingForm = () => {
     }
   }, []);
 
-  const checkTimeSlotAvailability = (date: Date, time: string) => {
+  // Update available time slots when date changes
+  useEffect(() => {
+    if (selectedDate) {
+      updateBookedTimeSlots(selectedDate);
+    }
+  }, [selectedDate]);
+
+  // Function to update booked time slots for a specific date
+  const updateBookedTimeSlots = (date: Date) => {
     const savedAppointments = localStorage.getItem('appointments');
-    if (!savedAppointments) return true;
+    if (!savedAppointments) {
+      setBookedTimeSlots([]);
+      return;
+    }
     
     const appointments = JSON.parse(savedAppointments);
-    return !appointments.some((apt: Appointment) => 
-      apt.status === 'confirmed' && 
-      format(new Date(apt.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') && 
-      apt.time === time
-    );
+    const bookedSlots = appointments
+      .filter((apt: Appointment) => 
+        apt.status !== 'cancelled' && 
+        format(new Date(apt.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+      )
+      .map((apt: Appointment) => apt.time);
+    
+    setBookedTimeSlots(bookedSlots);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -124,7 +141,7 @@ export const BookingForm = () => {
       return;
     }
 
-    if (!checkTimeSlotAvailability(selectedDate, selectedTime)) {
+    if (bookedTimeSlots.includes(selectedTime)) {
       toast.error("Este horário já está reservado. Por favor, escolha outro horário.");
       return;
     }
@@ -154,8 +171,16 @@ export const BookingForm = () => {
     // Save pet data separately
     const savedPets = localStorage.getItem('customerPets') || '[]';
     const pets = JSON.parse(savedPets);
-    if (!pets.find((p: Pet) => p.name === pet.name)) {
-      pets.push(pet);
+    
+    // Add owner's whatsapp to pet data to associate with the customer
+    const petWithOwner = {
+      ...pet,
+      ownerWhatsapp: owner.whatsapp
+    };
+    
+    if (!pets.find((p: Pet & {ownerWhatsapp?: string}) => 
+      p.name === pet.name && p.ownerWhatsapp === owner.whatsapp)) {
+      pets.push(petWithOwner);
       localStorage.setItem('customerPets', JSON.stringify(pets));
     }
 
@@ -212,7 +237,10 @@ export const BookingForm = () => {
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={setSelectedDate}
+                  onSelect={(date) => {
+                    setSelectedDate(date);
+                    setSelectedTime(""); // Reset time selection when date changes
+                  }}
                   initialFocus
                   disabled={(date) => date < new Date()}
                   className={cn("p-3 pointer-events-auto")}
@@ -228,16 +256,24 @@ export const BookingForm = () => {
                 <SelectValue placeholder="Selecione um horário" />
               </SelectTrigger>
               <SelectContent>
-                {availableTimes.sort((a, b) => 
-                  a.time.localeCompare(b.time)
-                ).map((slot) => (
-                  <SelectItem key={slot.id} value={slot.time}>
-                    <div className="flex items-center">
-                      <Clock className="mr-2 h-4 w-4" />
-                      {slot.time}
-                    </div>
-                  </SelectItem>
-                ))}
+                {availableTimes
+                  .sort((a, b) => a.time.localeCompare(b.time))
+                  .map((slot) => {
+                    const isBooked = bookedTimeSlots.includes(slot.time);
+                    return (
+                      <SelectItem 
+                        key={slot.id} 
+                        value={slot.time} 
+                        disabled={isBooked}
+                        className={isBooked ? "text-gray-400" : ""}
+                      >
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4" />
+                          {slot.time} {isBooked && " (Indisponível)"}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
               </SelectContent>
             </Select>
           </div>

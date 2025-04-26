@@ -108,6 +108,17 @@ export const AdminAppointments = () => {
   };
 
   const handleRemoveTimeSlot = (id: string) => {
+    // Check if there are any appointments using this time slot
+    const timeSlot = timeSlots.find(slot => slot.id === id);
+    if (!timeSlot) return;
+
+    const isTimeSlotInUse = appointments.some(apt => apt.time === timeSlot.time && apt.status !== 'cancelled');
+    
+    if (isTimeSlotInUse) {
+      toast.error("Este horário possui agendamentos ativos e não pode ser removido");
+      return;
+    }
+    
     const updatedSlots = timeSlots.filter(slot => slot.id !== id);
     setTimeSlots(updatedSlots);
     localStorage.setItem('timeSlots', JSON.stringify(updatedSlots));
@@ -115,6 +126,24 @@ export const AdminAppointments = () => {
   };
 
   const handleStatusChange = (id: string, status: 'pending' | 'confirmed' | 'cancelled') => {
+    // For confirming appointments, check if there's already a confirmed appointment at this time
+    if (status === 'confirmed') {
+      const appointmentToConfirm = appointments.find(apt => apt.id === id);
+      if (!appointmentToConfirm) return;
+      
+      const conflictingAppointment = appointments.find(apt => 
+        apt.id !== id && 
+        apt.status === 'confirmed' && 
+        formatDate(apt.date) === formatDate(appointmentToConfirm.date) && 
+        apt.time === appointmentToConfirm.time
+      );
+      
+      if (conflictingAppointment) {
+        toast.error(`Já existe um agendamento confirmado para ${appointmentToConfirm.time} nesta data`);
+        return;
+      }
+    }
+
     const updatedAppointments = appointments.map(apt =>
       apt.id === id ? { ...apt, status } : apt
     );
