@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Calendar, Check } from "lucide-react";
+import { Calendar, Check, X, Bell } from "lucide-react";
 import { toast } from "sonner";
 
 interface CustomerDashboardProps {
@@ -76,83 +76,147 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Minha Área</h1>
-          <Button variant="outline" onClick={() => {
-            localStorage.removeItem('currentCustomer');
-            navigate('/login');
-          }}>
+      <div className="max-w-5xl mx-auto space-y-8">
+        <div className="flex justify-between items-center bg-card p-6 rounded-lg shadow-sm">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              Minha Área
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Gerencie seus agendamentos e pets
+            </p>
+          </div>
+          <Button 
+            variant="outline"
+            className="hover:bg-destructive hover:text-destructive-foreground" 
+            onClick={() => {
+              localStorage.removeItem('currentCustomer');
+              navigate('/login');
+            }}
+          >
             Sair
           </Button>
         </div>
 
-        <div className="grid gap-6">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Meus Agendamentos</h2>
-            <div className="space-y-4">
-              {appointments.map((appointment) => (
-                <Card key={appointment.id} className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <span className="font-medium">
-                          {format(new Date(appointment.date), 'dd/MM/yyyy')} às {appointment.time}
-                        </span>
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Bell className="h-5 w-5 text-primary" />
+                Meus Agendamentos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {appointments.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Nenhum agendamento encontrado
+                  </p>
+                ) : (
+                  appointments.map((appointment) => (
+                    <div
+                      key={appointment.id}
+                      className={`flex justify-between items-center p-4 rounded-lg border ${
+                        appointment.status === 'confirmed'
+                          ? 'bg-green-50 border-green-200'
+                          : appointment.status === 'cancelled'
+                          ? 'bg-red-50 border-red-200'
+                          : 'bg-card border-border'
+                      }`}
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-primary" />
+                          <span className="font-medium">
+                            {format(new Date(appointment.date), 'dd/MM/yyyy')} às {appointment.time}
+                          </span>
+                          {appointment.status === 'confirmed' && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <Check className="w-3 h-3 mr-1" />
+                              Confirmado
+                            </span>
+                          )}
+                          {appointment.status === 'cancelled' && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              <X className="w-3 h-3 mr-1" />
+                              Cancelado
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Pet: {appointment.petName}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Pet: {appointment.petName}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Status: {appointment.status}
-                      </p>
+                      {appointment.status === 'pending' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCancelAppointment(appointment.id)}
+                          className="hover:bg-destructive hover:text-destructive-foreground"
+                        >
+                          Cancelar
+                        </Button>
+                      )}
                     </div>
-                    {appointment.status === 'pending' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCancelAppointment(appointment.id)}
-                      >
-                        Cancelar
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              ))}
-            </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
           </Card>
 
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Meus Pets</h2>
-            <div className="space-y-4">
-              {pets.map((pet, index) => (
-                <Card key={index} className="p-4">
-                  <div className="space-y-2">
-                    <h3 className="font-medium">{pet.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {pet.type} • {pet.breed} • {pet.age} • {pet.weight}kg
-                    </p>
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Vacinas</h4>
-                      <div className="space-y-2">
-                        {vaccines
-                          .filter((v) => v.petName === pet.name)
-                          .map((vaccine) => (
-                            <div key={vaccine.id} className="flex items-center gap-2 text-sm">
-                              <Check className="h-4 w-4" />
-                              <span>{vaccine.name}</span>
-                              <span className="text-muted-foreground">
-                                ({format(new Date(vaccine.date), 'dd/MM/yyyy')})
-                              </span>
-                            </div>
-                          ))}
+          <Card className="col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Check className="h-5 w-5 text-primary" />
+                Meus Pets
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {pets.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8 col-span-2">
+                    Nenhum pet cadastrado
+                  </p>
+                ) : (
+                  pets.map((pet, index) => (
+                    <Card key={index} className="p-4 hover:shadow-md transition-shadow">
+                      <div className="space-y-3">
+                        <h3 className="font-semibold text-lg">{pet.name}</h3>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <span className="text-muted-foreground">Tipo:</span>
+                          <span>{pet.type}</span>
+                          <span className="text-muted-foreground">Raça:</span>
+                          <span>{pet.breed}</span>
+                          <span className="text-muted-foreground">Idade:</span>
+                          <span>{pet.age}</span>
+                          <span className="text-muted-foreground">Peso:</span>
+                          <span>{pet.weight}kg</span>
+                        </div>
+                        <div className="pt-3 border-t">
+                          <h4 className="text-sm font-medium mb-2">Vacinas</h4>
+                          <div className="space-y-2">
+                            {vaccines
+                              .filter((v) => v.petName === pet.name)
+                              .map((vaccine) => (
+                                <div
+                                  key={vaccine.id}
+                                  className="flex items-center gap-2 text-sm bg-accent/10 p-2 rounded-md"
+                                >
+                                  <Check className="h-4 w-4 text-primary" />
+                                  <span>{vaccine.name}</span>
+                                  <span className="text-muted-foreground ml-auto">
+                                    {format(new Date(vaccine.date), 'dd/MM/yyyy')}
+                                  </span>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </CardContent>
           </Card>
         </div>
       </div>
