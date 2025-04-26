@@ -18,6 +18,7 @@ interface Pet {
   breed: string;
   age: string;
   weight: string;
+  ownerWhatsapp?: string;
 }
 
 interface Owner {
@@ -63,8 +64,33 @@ export const BookingForm = () => {
     address: "",
   });
 
-  // Load initial data
+  const [customerPets, setCustomerPets] = useState<Pet[]>([]);
+  const [selectedPetId, setSelectedPetId] = useState<string>("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentCustomer, setCurrentCustomer] = useState<any>(null);
+
   useEffect(() => {
+    // Check if user is logged in
+    const savedCustomer = localStorage.getItem('currentCustomer');
+    if (savedCustomer) {
+      const customer = JSON.parse(savedCustomer);
+      setIsLoggedIn(true);
+      setCurrentCustomer(customer);
+      setOwner({
+        name: customer.name || "",
+        whatsapp: customer.whatsapp || "",
+        address: customer.address || "",
+      });
+
+      // Load customer's pets
+      const savedPets = localStorage.getItem('customerPets');
+      if (savedPets) {
+        const allPets = JSON.parse(savedPets);
+        const customerPets = allPets.filter((pet: Pet) => pet.ownerWhatsapp === customer.whatsapp);
+        setCustomerPets(customerPets);
+      }
+    }
+
     // Load services
     const savedServices = localStorage.getItem('services');
     if (savedServices) {
@@ -105,6 +131,21 @@ export const BookingForm = () => {
       }
     }
   }, []);
+
+  // Handle pet selection
+  const handlePetSelection = (petName: string) => {
+    const selectedPet = customerPets.find(pet => pet.name === petName);
+    if (selectedPet) {
+      setPet({
+        name: selectedPet.name,
+        type: selectedPet.type,
+        breed: selectedPet.breed,
+        age: selectedPet.age,
+        weight: selectedPet.weight,
+      });
+      setSelectedPetId(petName);
+    }
+  };
 
   // Update available time slots when date changes
   useEffect(() => {
@@ -280,6 +321,22 @@ export const BookingForm = () => {
 
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Dados do Pet</h3>
+          {isLoggedIn && customerPets.length > 0 ? (
+            <div className="space-y-4">
+              <Select value={selectedPetId} onValueChange={handlePetSelection}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um pet" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customerPets.map((pet) => (
+                    <SelectItem key={pet.name} value={pet.name}>
+                      {pet.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
           <div className="grid gap-4">
             <Input
               placeholder="Nome do pet"
@@ -311,26 +368,28 @@ export const BookingForm = () => {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Dados do Tutor</h3>
-          <div className="grid gap-4">
-            <Input
-              placeholder="Nome completo"
-              value={owner.name}
-              onChange={(e) => setOwner({ ...owner, name: e.target.value })}
-            />
-            <Input
-              placeholder="WhatsApp"
-              value={owner.whatsapp}
-              onChange={(e) => setOwner({ ...owner, whatsapp: e.target.value })}
-            />
-            <Input
-              placeholder="Endereço"
-              value={owner.address}
-              onChange={(e) => setOwner({ ...owner, address: e.target.value })}
-            />
+        {!isLoggedIn && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Dados do Tutor</h3>
+            <div className="grid gap-4">
+              <Input
+                placeholder="Nome completo"
+                value={owner.name}
+                onChange={(e) => setOwner({ ...owner, name: e.target.value })}
+              />
+              <Input
+                placeholder="WhatsApp"
+                value={owner.whatsapp}
+                onChange={(e) => setOwner({ ...owner, whatsapp: e.target.value })}
+              />
+              <Input
+                placeholder="Endereço"
+                value={owner.address}
+                onChange={(e) => setOwner({ ...owner, address: e.target.value })}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <Button type="submit" className="w-full">
