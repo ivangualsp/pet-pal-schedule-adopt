@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,8 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
   useEffect(() => {
     const loadCustomerData = () => {
       const savedAppointments = localStorage.getItem('appointments');
-      const savedPets = localStorage.getItem('customerPets');
+      const savedCustomerPets = localStorage.getItem('customerPets');
+      const savedClientPets = localStorage.getItem('clientPets');
       const savedVaccines = localStorage.getItem('petVaccines') || '[]';
 
       if (savedAppointments) {
@@ -30,14 +32,26 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
         setAppointments(customerAppointments);
       }
 
-      if (savedPets) {
-        const allPets = JSON.parse(savedPets);
-         const customerPets = allPets.filter(
+      // Combine pets from both storage locations
+      let allPets: any[] = [];
+      
+      if (savedCustomerPets) {
+        const customerPets = JSON.parse(savedCustomerPets);
+        const filteredCustomerPets = customerPets.filter(
           (pet: any) => pet.ownerWhatsapp === customerWhatsapp
         );
-        setPets(customerPets);
+        allPets = [...allPets, ...filteredCustomerPets];
       }
-
+      
+      if (savedClientPets) {
+        const clientPets = JSON.parse(savedClientPets);
+        const filteredClientPets = clientPets.filter(
+          (pet: any) => pet.ownerWhatsapp === customerWhatsapp
+        );
+        allPets = [...allPets, ...filteredClientPets];
+      }
+      
+      setPets(allPets);
       setVaccines(JSON.parse(savedVaccines));
     };
 
@@ -186,17 +200,17 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
                           <span className="text-muted-foreground">Tipo:</span>
                           <span>{pet.type}</span>
                           <span className="text-muted-foreground">Raça:</span>
-                          <span>{pet.breed}</span>
+                          <span>{pet.breed || 'Não informado'}</span>
                           <span className="text-muted-foreground">Idade:</span>
                           <span>{pet.age}</span>
                           <span className="text-muted-foreground">Peso:</span>
-                          <span>{pet.weight}kg</span>
+                          <span>{pet.weight ? `${pet.weight}kg` : 'Não informado'}</span>
                         </div>
                         <div className="pt-3 border-t">
                           <h4 className="text-sm font-medium mb-2">Vacinas</h4>
                           <div className="space-y-2">
                             {vaccines
-                              .filter((v) => v.petName === pet.name)
+                              .filter((v) => (v.petId === pet.id) || (v.petName === pet.name))
                               .map((vaccine) => (
                                 <div
                                   key={vaccine.id}
@@ -209,6 +223,9 @@ const CustomerDashboard = ({ customerWhatsapp }: CustomerDashboardProps) => {
                                   </span>
                                 </div>
                               ))}
+                            {!vaccines.some((v) => (v.petId === pet.id) || (v.petName === pet.name)) && (
+                              <p className="text-sm text-muted-foreground">Nenhuma vacina registrada</p>
+                            )}
                           </div>
                         </div>
                       </div>
