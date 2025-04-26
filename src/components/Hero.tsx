@@ -15,9 +15,11 @@ export const Hero = () => {
             Confie seu pet aos melhores profissionais.
           </p>
           <div className="flex justify-center gap-4">
-            <Button className="bg-accent hover:bg-accent/90" size="lg">
-              <Calendar className="mr-2 h-5 w-5" />
-              Agendar Serviço
+            <Button className="bg-accent hover:bg-accent/90" size="lg" asChild>
+              <Link to="/booking">
+                <Calendar className="mr-2 h-5 w-5" />
+                Agendar Serviço
+              </Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
               <Link to="/admin">
