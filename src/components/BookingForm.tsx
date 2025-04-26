@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,11 +104,28 @@ export const BookingForm = () => {
     }
   }, []);
 
+  const checkTimeSlotAvailability = (date: Date, time: string) => {
+    const savedAppointments = localStorage.getItem('appointments');
+    if (!savedAppointments) return true;
+    
+    const appointments = JSON.parse(savedAppointments);
+    return !appointments.some((apt: Appointment) => 
+      apt.status === 'confirmed' && 
+      format(new Date(apt.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') && 
+      apt.time === time
+    );
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedDate || !selectedService || !selectedTime || !pet.name || !owner.name || !owner.whatsapp) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    if (!checkTimeSlotAvailability(selectedDate, selectedTime)) {
+      toast.error("Este horário já está reservado. Por favor, escolha outro horário.");
       return;
     }
 
